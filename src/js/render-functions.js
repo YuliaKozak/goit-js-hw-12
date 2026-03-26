@@ -45,3 +45,15 @@ export function showLoader() {
 export function hideLoader() {
   document.querySelector('.loader').style.display = 'none';
 }
+
+//  Показати кнопку Load More
+export function showLoadMoreButton() {
+  const btn = document.querySelector('.load-more');
+  if (btn) btn.style.display = 'block';
+}
+
+//  Сховати кнопку Load More
+export function hideLoadMoreButton() {
+  const btn = document.querySelector('.load-more');
+  if (btn) btn.style.display = 'none';
+}

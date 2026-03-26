@@ -4,19 +4,21 @@ import {
   clearGallery,
   showLoader,
   hideLoader,
+  showLoadMoreButton,
+  hideLoadMoreButton,
 } from './js/render-functions';
 
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
 const form = document.querySelector('.form');
-const loadMoreBtn = document.querySelector('.load-more');
 
 let query = '';
 let page = 1;
 let totalHits = 0;
+const PER_PAGE = 15;
 
-// 🔎 Пошук
+// Пошук
 form.addEventListener('submit', async e => {
   e.preventDefault();
 
@@ -25,13 +27,12 @@ form.addEventListener('submit', async e => {
 
   page = 1;
   clearGallery();
-  loadMoreBtn.style.display = 'none';
+  hideLoadMoreButton();
 
   showLoader();
 
   try {
     const data = await getImagesByQuery(query, page);
-
     totalHits = data.totalHits;
 
     if (!data.hits.length) {
@@ -43,10 +44,16 @@ form.addEventListener('submit', async e => {
 
     createGallery(data.hits);
 
-    // показ кнопки
-    if (totalHits > 15) {
-      loadMoreBtn.style.display = 'block';
+    // ВАЖЛИВО: якщо ВСІ результати вже показані
+    if (totalHits <= PER_PAGE) {
+      iziToast.info({
+        message: "We're sorry, but you've reached the end of search results.",
+      });
+      return;
     }
+
+    // показати кнопку
+    showLoadMoreButton();
 
   } catch (error) {
     iziToast.error({ message: 'Error fetching images' });
@@ -56,9 +63,11 @@ form.addEventListener('submit', async e => {
 });
 
 // ➕ Load more
-loadMoreBtn.addEventListener('click', async () => {
+document.querySelector('.load-more').addEventListener('click', async () => {
   page += 1;
 
+  // Ховаємо кнопку під час запиту
+  hideLoadMoreButton();
   showLoader();
 
   try {
@@ -66,18 +75,20 @@ loadMoreBtn.addEventListener('click', async () => {
 
     createGallery(data.hits);
 
-    // 🔥 перевірка кінця колекції
-    const totalLoaded = page * 15;
+    const totalLoaded = page * PER_PAGE;
 
+    // КІНЕЦЬ КОЛЕКЦІЇ
     if (totalLoaded >= totalHits) {
-      loadMoreBtn.style.display = 'none';
-
       iziToast.info({
         message: "We're sorry, but you've reached the end of search results.",
       });
+      return;
     }
 
-    // 🔽 плавний скрол
+    // якщо ще є — показати кнопку назад
+    showLoadMoreButton();
+
+    // плавний скрол
     const card = document.querySelector('.gallery-item');
     const cardHeight = card.getBoundingClientRect().height;
 
